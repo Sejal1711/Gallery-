@@ -6,6 +6,7 @@ import type { Photo } from "@/hooks/useFetchPhotos"
 
 type Props = {
   photo: Photo
+  index: number
   isFavourite: boolean
   onToggle: (id: string) => void
 }
@@ -21,18 +22,22 @@ export const cardVariants = {
   exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } },
 }
 
-export function PhotoCard({ photo, isFavourite, onToggle }: Props) {
+export function PhotoCard({ photo, index, isFavourite, onToggle }: Props) {
   const [loaded, setLoaded] = useState(false)
 
   const thumb = `https://picsum.photos/id/${photo.id}/400/300`
+  // Column position drives the stagger (max 4 cols)
+  const delay = (index % 4) * 0.08
 
   return (
     <motion.div
       layout
       variants={cardVariants}
       initial="hidden"
-      animate="visible"
+      whileInView="visible"
       exit="exit"
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ delay }}
       className="group overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border transition-shadow duration-300 hover:shadow-md"
     >
       {/* Image */}

@@ -1,21 +1,20 @@
-# React + TypeScript + Vite + shadcn/ui
+# Picasa
 
-This is a template for a new Vite project with React, TypeScript, and shadcn/ui.
+A photo gallery built with React, Vite, Tailwind CSS, shadcn/ui, and Framer Motion.
 
-## Adding components
+Fetches 30 photos from the Picsum API, supports search by author, and lets you favourite photos with localStorage persistence.
 
-To add components to your app, run the following command:
+## Stack
+
+- React 19 + TypeScript
+- Vite 7
+- Tailwind CSS v4
+- shadcn/ui
+- Framer Motion
+
+## Getting started
 
 ```bash
-npx shadcn@latest add button
-```
-
-This will place the ui components in the `src/components` directory.
-
-## Using components
-
-To use the components in your app, import them as follows:
-
-```tsx
-import { Button } from "@/components/ui/button"
+pnpm install
+pnpm dev
 ```

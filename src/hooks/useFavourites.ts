@@ -1,7 +1,6 @@
 import { useReducer } from "react"
 
 type FavState = { ids: Set<string> }
-
 type FavAction = { type: "TOGGLE"; id: string }
 
 const STORAGE_KEY = "gallery_favourites"
@@ -12,7 +11,7 @@ function init(): FavState {
     const parsed: unknown = raw ? JSON.parse(raw) : []
     if (Array.isArray(parsed)) return { ids: new Set(parsed as string[]) }
   } catch {
-    // corrupted storage — start fresh
+    // ignore
   }
   return { ids: new Set() }
 }

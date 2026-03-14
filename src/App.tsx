@@ -4,7 +4,7 @@ import { Search, ImageOff, Heart, LayoutGrid } from "lucide-react"
 import { useFetchPhotos } from "@/hooks/useFetchPhotos"
 import { useFavourites } from "@/hooks/useFavourites"
 import { PhotoCard } from "@/components/PhotoCard"
-import { Spinner } from "@/components/Spinner"
+import { Loader } from "@/components/Loader"
 import { Hero } from "@/components/Hero"
 import { cn } from "@/lib/utils"
 
@@ -30,10 +30,7 @@ export default function App() {
   }, [])
 
   const filtered = useMemo(() => {
-    const pool = tab === "favourites"
-      ? photos.filter((p) => favourites.has(p.id))
-      : photos
-
+    const pool = tab === "favourites" ? photos.filter((p) => favourites.has(p.id)) : photos
     const q = query.trim().toLowerCase()
     if (!q) return pool
     return pool.filter((p) => p.author.toLowerCase().includes(q))
@@ -43,15 +40,10 @@ export default function App() {
 
   return (
     <div className="bg-background">
-
-      {/* ── Hero ── */}
       <Hero onExplore={scrollToGallery} />
 
-      {/* ── Gallery ── */}
       <section ref={galleryRef} className="min-h-screen px-5 pb-20 pt-14">
         <div className="mx-auto max-w-6xl">
-
-          {/* Section header */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -60,9 +52,7 @@ export default function App() {
             className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
           >
             <div>
-              <h2 className="text-2xl font-black tracking-tight text-foreground">
-                Picasa Gallery
-              </h2>
+              <h2 className="text-2xl font-black tracking-tight text-foreground">Picasa Gallery</h2>
               <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
                 {loading ? "Loading…" : `${photos.length} photos`}
                 {!loading && (
@@ -75,13 +65,9 @@ export default function App() {
               </p>
             </div>
 
-            {/* Search */}
             {!loading && !error && (
               <div className="relative w-full sm:w-64">
-                <Search
-                  size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="text"
                   value={query}
@@ -93,13 +79,13 @@ export default function App() {
             )}
           </motion.div>
 
-          {/* Tabs */}
           {!loading && !error && (
             <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="mb-8 flex gap-1 rounded-full border border-border bg-muted p-1 w-fit"
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="mb-8 flex w-fit gap-1 rounded-full border border-border bg-muted p-1"
             >
               {(["all", "favourites"] as Tab[]).map((t) => (
                 <button
@@ -107,9 +93,7 @@ export default function App() {
                   onClick={() => setTab(t)}
                   className={cn(
                     "relative flex cursor-pointer items-center gap-2 rounded-full px-5 py-1.5 text-sm font-medium transition-colors duration-200",
-                    tab === t
-                      ? "text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
+                    tab === t ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {tab === t && (
@@ -128,14 +112,12 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* Loading */}
           {loading && (
-            <div className="flex justify-center py-24">
-              <Spinner />
-            </div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-8">
+              <Loader />
+            </motion.div>
           )}
 
-          {/* Error */}
           {error && (
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
@@ -148,7 +130,6 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* Empty state */}
           {isEmpty && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -167,20 +148,14 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* Grid */}
           {!loading && !error && filtered.length > 0 && (
-            <motion.div
-              layout
-              variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
-            >
+            <motion.div layout className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               <AnimatePresence>
-                {filtered.map((photo) => (
+                {filtered.map((photo, i) => (
                   <PhotoCard
                     key={photo.id}
                     photo={photo}
+                    index={i}
                     isFavourite={favourites.has(photo.id)}
                     onToggle={handleToggleFav}
                   />
@@ -188,10 +163,8 @@ export default function App() {
               </AnimatePresence>
             </motion.div>
           )}
-
         </div>
       </section>
-
     </div>
   )
 }
