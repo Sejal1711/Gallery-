@@ -10,7 +10,6 @@ type Props = {
   onToggle: (id: string) => void
 }
 
-// Variants are driven by the parent stagger container in App.tsx
 export const cardVariants = {
   hidden: { opacity: 0, y: 24, scale: 0.97 },
   visible: {
@@ -34,50 +33,52 @@ export function PhotoCard({ photo, isFavourite, onToggle }: Props) {
       initial="hidden"
       animate="visible"
       exit="exit"
-      className="group relative overflow-hidden rounded-xl bg-muted"
+      className="group overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border transition-shadow duration-300 hover:shadow-md"
     >
-      {/* Skeleton shown until image loads */}
-      {!loaded && (
-        <div className="aspect-[4/3] w-full animate-pulse bg-muted-foreground/10" />
-      )}
-
-      <img
-        src={thumb}
-        alt={photo.author}
-        onLoad={() => setLoaded(true)}
-        className={cn(
-          "aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-105",
-          !loaded && "hidden"
+      {/* Image */}
+      <div className="relative overflow-hidden">
+        {!loaded && (
+          <div className="aspect-[4/3] w-full animate-pulse bg-muted" />
         )}
-      />
 
-      {/* Overlay on hover */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        <img
+          src={thumb}
+          alt={photo.author}
+          onLoad={() => setLoaded(true)}
+          className={cn(
+            "aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105",
+            !loaded && "hidden"
+          )}
+        />
 
-      {/* Author name */}
-      <p className="absolute bottom-2 left-3 translate-y-2 text-xs font-medium text-white opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-        {photo.author}
-      </p>
-
-      {/* Fav button */}
-      <button
-        onClick={() => onToggle(photo.id)}
-        aria-label={isFavourite ? "Remove from favourites" : "Add to favourites"}
-        className="absolute right-2 top-2 cursor-pointer rounded-full bg-white/20 p-1.5 backdrop-blur-sm transition-all duration-200 hover:bg-white/40 hover:scale-110"
-      >
-        <motion.div
-          animate={isFavourite ? { scale: [1, 1.4, 1] } : { scale: 1 }}
-          transition={{ duration: 0.3 }}
+        {/* Fav button */}
+        <button
+          onClick={() => onToggle(photo.id)}
+          aria-label={isFavourite ? "Remove from favourites" : "Add to favourites"}
+          className="absolute right-2.5 top-2.5 cursor-pointer rounded-full bg-background/80 p-1.5 backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:bg-background"
         >
-          <Heart
-            size={16}
-            className={cn(
-              "transition-colors duration-200",
-              isFavourite ? "fill-rose-500 stroke-rose-500" : "stroke-white"
-            )}
-          />
-        </motion.div>
-      </button>
+          <motion.div
+            animate={isFavourite ? { scale: [1, 1.45, 1] } : { scale: 1 }}
+            transition={{ duration: 0.28 }}
+          >
+            <Heart
+              size={15}
+              className={cn(
+                "transition-colors duration-200",
+                isFavourite
+                  ? "fill-primary stroke-primary"
+                  : "stroke-muted-foreground"
+              )}
+            />
+          </motion.div>
+        </button>
+      </div>
+
+      {/* Footer */}
+      <div className="px-3 py-2.5">
+        <p className="truncate text-xs font-semibold text-card-foreground">{photo.author}</p>
+        <p className="text-[11px] text-muted-foreground">#{photo.id}</p>
+      </div>
     </motion.div>
   )
 }

@@ -1,134 +1,197 @@
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { Search, ImageOff } from "lucide-react"
+import { Search, ImageOff, Heart, LayoutGrid } from "lucide-react"
 import { useFetchPhotos } from "@/hooks/useFetchPhotos"
 import { useFavourites } from "@/hooks/useFavourites"
 import { PhotoCard } from "@/components/PhotoCard"
 import { Spinner } from "@/components/Spinner"
+import { Hero } from "@/components/Hero"
+import { cn } from "@/lib/utils"
+
+type Tab = "all" | "favourites"
 
 export default function App() {
   const { photos, loading, error } = useFetchPhotos()
   const { favourites, toggle } = useFavourites()
   const [query, setQuery] = useState("")
+  const [tab, setTab] = useState<Tab>("all")
+  const galleryRef = useRef<HTMLDivElement>(null)
 
-  // useCallback — stable reference so PhotoCard doesn't re-render
-  // unless the toggle function identity changes (it won't, dispatch is stable)
+  function scrollToGallery() {
+    galleryRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
   const handleToggleFav = useCallback((id: string) => {
     toggle(id)
   }, [toggle])
 
-  // useCallback — keeps onChange identity stable across renders driven
-  // by unrelated state updates (e.g. favourites changing)
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value)
   }, [])
 
-  // useMemo — recomputes only when the photos array or query string changes,
-  // avoiding a fresh .filter() pass on every unrelated render
   const filtered = useMemo(() => {
+    const pool = tab === "favourites"
+      ? photos.filter((p) => favourites.has(p.id))
+      : photos
+
     const q = query.trim().toLowerCase()
-    if (!q) return photos
-    return photos.filter((p) => p.author.toLowerCase().includes(q))
-  }, [photos, query])
+    if (!q) return pool
+    return pool.filter((p) => p.author.toLowerCase().includes(q))
+  }, [photos, query, tab, favourites])
+
+  const isEmpty = !loading && !error && filtered.length === 0
 
   return (
-    <div className="min-h-screen bg-background px-4 pb-16 pt-10">
-      <div className="mx-auto max-w-6xl">
+    <div className="bg-background">
 
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-8"
-        >
-          <h1 className="text-3xl font-bold tracking-tight">Gallery</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {loading
-              ? "Fetching photos…"
-              : `${photos.length} photos · ${favourites.size} favourited`}
-          </p>
-        </motion.div>
+      {/* ── Hero ── */}
+      <Hero onExplore={scrollToGallery} />
 
-        {/* Search — only shown once photos are loaded */}
-        {!loading && !error && (
+      {/* ── Gallery ── */}
+      <section ref={galleryRef} className="min-h-screen px-5 pb-20 pt-14">
+        <div className="mx-auto max-w-6xl">
+
+          {/* Section header */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 }}
-            className="relative mb-8 max-w-sm"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
           >
-            <Search
-              size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
-              type="text"
-              value={query}
-              onChange={handleSearch}
-              placeholder="Search by author…"
-              className="w-full rounded-lg border border-input bg-transparent py-2 pl-9 pr-3 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            />
-          </motion.div>
-        )}
+            <div>
+              <h2 className="text-2xl font-black tracking-tight text-foreground">
+                Picasa Gallery
+              </h2>
+              <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                {loading ? "Loading…" : `${photos.length} photos`}
+                {!loading && (
+                  <>
+                    <span>·</span>
+                    <Heart size={11} className="fill-primary stroke-primary" />
+                    {favourites.size} favourited
+                  </>
+                )}
+              </p>
+            </div>
 
-        {/* Loading spinner */}
-        {loading && (
-          <div className="flex justify-center py-24">
-            <Spinner />
-          </div>
-        )}
-
-        {/* Error state */}
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center gap-3 py-24 text-center text-muted-foreground"
-          >
-            <ImageOff size={36} strokeWidth={1.5} />
-            <p className="font-medium">Failed to load photos</p>
-            <p className="text-sm">{error}</p>
-          </motion.div>
-        )}
-
-        {/* Empty search result */}
-        {!loading && !error && filtered.length === 0 && (
-          <motion.p
-            key="no-results"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="py-12 text-center text-sm text-muted-foreground"
-          >
-            No photos match &ldquo;{query}&rdquo;
-          </motion.p>
-        )}
-
-        {/* Photo grid — 1 col mobile / 2 col tablet / 4 col desktop */}
-        {!loading && !error && filtered.length > 0 && (
-          <motion.div
-            layout
-            variants={{
-              visible: { transition: { staggerChildren: 0.06 } },
-            }}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-          >
-            <AnimatePresence>
-              {filtered.map((photo) => (
-                <PhotoCard
-                  key={photo.id}
-                  photo={photo}
-                  isFavourite={favourites.has(photo.id)}
-                  onToggle={handleToggleFav}
+            {/* Search */}
+            {!loading && !error && (
+              <div className="relative w-full sm:w-64">
+                <Search
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 />
-              ))}
-            </AnimatePresence>
+                <input
+                  type="text"
+                  value={query}
+                  onChange={handleSearch}
+                  placeholder="Search by author…"
+                  className="w-full rounded-full border border-input bg-card py-2 pl-8 pr-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            )}
           </motion.div>
-        )}
 
-      </div>
+          {/* Tabs */}
+          {!loading && !error && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="mb-8 flex gap-1 rounded-full border border-border bg-muted p-1 w-fit"
+            >
+              {(["all", "favourites"] as Tab[]).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={cn(
+                    "relative flex cursor-pointer items-center gap-2 rounded-full px-5 py-1.5 text-sm font-medium transition-colors duration-200",
+                    tab === t
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {tab === t && (
+                    <motion.span
+                      layoutId="tab-pill"
+                      className="absolute inset-0 rounded-full bg-primary"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative flex items-center gap-1.5">
+                    {t === "all" ? <LayoutGrid size={13} /> : <Heart size={13} />}
+                    {t === "all" ? "All Photos" : `Favourites${favourites.size > 0 ? ` (${favourites.size})` : ""}`}
+                  </span>
+                </button>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Loading */}
+          {loading && (
+            <div className="flex justify-center py-24">
+              <Spinner />
+            </div>
+          )}
+
+          {/* Error */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center gap-3 py-24 text-center text-muted-foreground"
+            >
+              <ImageOff size={36} strokeWidth={1.5} />
+              <p className="font-semibold text-foreground">Failed to load photos</p>
+              <p className="text-sm">{error}</p>
+            </motion.div>
+          )}
+
+          {/* Empty state */}
+          {isEmpty && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center gap-3 py-24 text-muted-foreground"
+            >
+              {tab === "favourites" ? (
+                <>
+                  <Heart size={36} strokeWidth={1.5} />
+                  <p className="font-semibold text-foreground">No favourites yet</p>
+                  <p className="text-sm">Hit the heart on any photo to save it here.</p>
+                </>
+              ) : (
+                <p className="text-sm">No photos match &ldquo;{query}&rdquo;</p>
+              )}
+            </motion.div>
+          )}
+
+          {/* Grid */}
+          {!loading && !error && filtered.length > 0 && (
+            <motion.div
+              layout
+              variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
+            >
+              <AnimatePresence>
+                {filtered.map((photo) => (
+                  <PhotoCard
+                    key={photo.id}
+                    photo={photo}
+                    isFavourite={favourites.has(photo.id)}
+                    onToggle={handleToggleFav}
+                  />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
+
+        </div>
+      </section>
+
     </div>
   )
 }
