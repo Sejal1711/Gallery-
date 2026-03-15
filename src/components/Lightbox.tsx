@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Heart, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -12,6 +12,12 @@ type Props = {
 }
 
 export function Lightbox({ photo, isFavourite, onToggle, onClose }: Props) {
+  const [fullLoaded, setFullLoaded] = useState(false)
+
+  useEffect(() => {
+    setFullLoaded(false)
+  }, [photo?.id])
+
   useEffect(() => {
     if (!photo) return
     function onKey(e: KeyboardEvent) {
@@ -45,9 +51,22 @@ export function Lightbox({ photo, isFavourite, onToggle, onClose }: Props) {
           >
             <div className="relative">
               <img
+                src={`https://picsum.photos/id/${photo.id}/400/300`}
+                alt={photo.author}
+                aria-hidden
+                className={cn(
+                  "w-full object-cover max-h-[70vh] absolute inset-0 h-full",
+                  fullLoaded && "hidden"
+                )}
+              />
+              <img
                 src={`https://picsum.photos/id/${photo.id}/1200/800`}
                 alt={photo.author}
-                className="w-full object-cover max-h-[70vh]"
+                onLoad={() => setFullLoaded(true)}
+                className={cn(
+                  "w-full object-cover max-h-[70vh]",
+                  !fullLoaded && "opacity-0"
+                )}
               />
 
               {/* Top controls */}
