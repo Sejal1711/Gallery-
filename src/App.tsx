@@ -4,9 +4,11 @@ import { Search, ImageOff, Heart, LayoutGrid } from "lucide-react"
 import { useFetchPhotos } from "@/hooks/useFetchPhotos"
 import { useFavourites } from "@/hooks/useFavourites"
 import { PhotoCard } from "@/components/PhotoCard"
+import { Lightbox } from "@/components/Lightbox"
 import { Loader } from "@/components/Loader"
 import { Hero } from "@/components/Hero"
 import { cn } from "@/lib/utils"
+import type { Photo } from "@/hooks/useFetchPhotos"
 
 type Tab = "all" | "favourites"
 
@@ -15,6 +17,7 @@ export default function App() {
   const { favourites, toggle } = useFavourites()
   const [query, setQuery] = useState("")
   const [tab, setTab] = useState<Tab>("all")
+  const [selected, setSelected] = useState<Photo | null>(null)
   const galleryRef = useRef<HTMLDivElement>(null)
 
   function scrollToGallery() {
@@ -40,6 +43,13 @@ export default function App() {
 
   return (
     <div className="bg-background">
+      <Lightbox
+        photo={selected}
+        isFavourite={selected ? favourites.has(selected.id) : false}
+        onToggle={handleToggleFav}
+        onClose={() => setSelected(null)}
+      />
+
       <Hero onExplore={scrollToGallery} />
 
       <section ref={galleryRef} className="min-h-screen px-5 pb-20 pt-14">
@@ -158,6 +168,7 @@ export default function App() {
                     index={i}
                     isFavourite={favourites.has(photo.id)}
                     onToggle={handleToggleFav}
+                    onOpen={setSelected}
                   />
                 ))}
               </AnimatePresence>
